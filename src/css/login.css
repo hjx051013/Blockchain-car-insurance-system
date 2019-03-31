@@ -1,0 +1,152 @@
+*{
+	margin: 0;
+	padding: 0;
+	font-size: 14px;
+}
+ol,ul{
+	/*去掉列表表示*/
+	list-style-type: none;
+}
+a{
+	color: #666;
+	text-decoration: none;
+}
+.left{
+	float: left;
+}
+.right{
+	float: right;
+}
+.show{
+	opacity: 1;
+}
+.fade{
+	opacity: 0;
+}
+
+/*测试部分*/
+#header,#nav,#footer{
+	height: 100px;
+	width: 100%;
+	/*border: 1px solid #000;*/
+}
+#main{
+	height: 720px;
+	width: 1500px;
+}
+.container{
+	width: 1180px;
+	/*border: 1px solid #f00;*/
+	margin: 0px auto;
+}
+/*header部分样式*/
+#header{
+	background-color: #C1CDC1;
+	height: 30px;
+}
+#header .xlwb{
+	width: 20px;
+	height: 17px;
+	background:url("../img/icons.png") no-repeat -47px -95px;
+}
+#header .txwb{
+	width: 20px;
+	height: 20px;
+	background:url("../img/icons.png") no-repeat -27px -92px;
+	/*no-repeat后面是偏移量*/
+}
+#header .tel{
+	font-size: 15px;
+	color: #17925f;
+}
+#header .header_left div{
+	float: left;
+	margin: 5px 10px;
+}
+#header .header_right li{
+	float: left;
+	margin: 5px 10px;
+}
+#header li a:hover{
+	color: #00925f;
+}
+#header .shop_car a{
+	padding-left: 8px;
+}
+#header .shop_car span{
+	width: 19px;
+	height: 16px;
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 10px;
+	background:  url("../img/icons.png") no-repeat 0px -96px;
+}
+/*设置导航栏样式*/
+#nav{
+	height: 66px;
+	background: #EEEEEE;
+}
+#nav img{
+	margin-top: 20px;
+	line-height: 66px;
+	margin: auto 20px;
+}
+#nav li{
+	float: left;
+	margin: 0px 20px;
+	line-height: 66px;
+	font-weight: bold;
+}
+#nav li a{
+	font-size: 18px;
+}
+#nav li a:hover{
+	color: #00925f;
+}
+/*设置主体部分样式*/
+#main .picture{
+	margin-left: 30px;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	right: 0;
+	background: url("../img/login2.jpg") center top;background-size: 100%;/*no-repeat 0px 0px*/
+	text-align: center;
+}
+#main .main1{
+	width: 500px;
+	height: 350px;
+	/*background: #666;*/
+	text-align: center;
+	margin: 0 auto;
+	padding-top: 300px;
+}
+#main li{
+	opacity: 1;
+	font-size: 20px;
+	font-weight: bold;
+	margin: 30px auto;
+}
+#main h1{
+	font-size: 25px;
+	font-weight: bold;
+}
+#main .btn>input{
+	margin: 10px 20px;
+	font-size: 20px;
+	font-weight: bold;
+}
+/*设置页脚部分样式*/
+#footer{
+		background-color: #C1CDC1;
+		height: 20px;
+}
+#footer p span{
+	margin: 3px 250px 3px 20px;
+}
+#footer p a{
+	margin: auto 15px;
+}
+#footer p a:hover{
+	color: #00925f;
+}

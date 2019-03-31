@@ -1,0 +1,221 @@
+*{
+	margin: 0;
+	padding: 0;
+	font-size: 14px;
+}
+ol,ul{
+	/*去掉列表表示*/
+	list-style-type: none;
+}
+a{
+	color: #666;
+	text-decoration: none;
+}
+.left{
+	float: left;
+}
+.right{
+	float: right;
+}
+.show{
+	opacity: 1;
+}
+.fade{
+	opacity: 0;
+}
+
+/*测试部分*/
+#header,#nav,#banner,#introduce,#product,#service,#footer{
+	height: 100px;
+	width: 100%;
+	/*border: 1px solid #000;*/
+}
+.container{
+	width: 1180px;
+	/*border: 1px solid #f00;*/
+	margin: 0px auto;
+}
+/*header部分样式*/
+#header{
+	background-color: #C1CDC1;
+	height: 30px;
+}
+#header .xlwb{
+	width: 20px;
+	height: 17px;
+	background:url("../img/icons.png") no-repeat -47px -95px;
+}
+#header .txwb{
+	width: 20px;
+	height: 20px;
+	background:url("../img/icons.png") no-repeat -27px -92px;
+	/*no-repeat后面是偏移量*/
+}
+#header .tel{
+	font-size: 15px;
+	color: #17925f;
+}
+#header .header_left div{
+	float: left;
+	margin: 5px 10px;
+}
+#header .header_right li{
+	float: left;
+	margin: 5px 10px;
+}
+#header li a:hover{
+	color: #00925f;
+}
+#header .shop_car a{
+	padding-left: 8px;
+}
+#header .shop_car span{
+	width: 19px;
+	height: 16px;
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 10px;
+	background:  url("../img/icons.png") no-repeat 0px -96px;
+}
+/*设置导航栏样式*/
+#nav{
+	height: 66px;
+	background: #EEEEEE;
+}
+#nav img{
+	margin-top: 20px;
+	line-height: 66px;
+	margin: auto 20px;
+}
+#nav li{
+	float: left;
+	margin: 0px 20px;
+	line-height: 66px;
+	font-weight: bold;
+}
+#nav li a{
+	font-size: 18px;
+}
+#nav li a:hover{
+	color: #00925f;
+}
+/*项目介绍部分样式*/
+#introduce{
+	height: 480px;
+	background: #DDD;
+	overflow: hidden;
+}
+#introduce .introduce_top{
+	text-align: center;
+	margin: 10px;
+}
+#introduce ul{
+	width: 1000px;
+	text-align: center;
+	margin: 10px auto;
+}
+#introduce ul li{
+	width: 320px;
+	/*border: 1px solid #000;*/
+	float: left;
+	border-bottom: 4px solid #DFDFDF;
+	transition: all .3s;
+}
+#introduce ul li:hover{
+	border-bottom: 3px solid #00925f;
+	transform: translateY(-10px);
+}
+#introduce ul div{
+	margin: 10px 5px;
+	border-bottom: 1px solid #fff;
+	transition: all .3s;
+}
+#introduce ul div img{
+	width: 310px;
+}
+#introduce ul li dd{
+	font-size: 16px;
+	font-weight: bold;
+}
+#introduce ul li dt{
+	margin-top: 10px;
+	margin-bottom: 15px;
+}
+/*车险产品部分样式*/
+#product{
+	height: 880px;
+	background-color: #DDD;
+	overflow: hidden;
+}
+#product .product_top{
+	text-align: center;
+	margin: 10px;
+}
+#product ul{
+	width: 1180px;
+	text-align: center;
+	margin: 40px auto;
+}
+#product ul li{
+	width: 350px;
+	margin: 10px 10px;
+	border-bottom: 4px solid #DFDFDF;
+	transition: all .3s;
+}
+#product ul li:hover{
+	border-bottom: 3px solid #00925f;
+	transform: translateY(-10px);
+}
+#product .clear_right{
+	clear: right;
+}
+/*设置服务部分的样式*/
+#service {
+	height: 175px;
+	background: #EEEEEE;
+}
+#service ul{
+	width: 1100px;
+	margin: 10px auto;
+	padding-top: 20px;
+}
+#service ul li{
+	width: 180px;
+	float: left;
+	text-align: center;
+	margin: 0px 20px;
+}
+#service ol li{
+	line-height: 30px;
+}
+#service ol li a:hover{
+	color: #00925f;
+}
+#service ol>li:first-child{
+	font-size: 18px;
+	font-weight: bold;
+}
+/*设置页脚部分样式*/
+#footer{
+		background-color: #C1CDC1;
+		height: 20px;
+}
+#footer p span{
+	margin: 3px 250px 3px 20px;
+}
+#footer p a{
+	margin: auto 15px;
+}
+#footer p a:hover{
+	color: #00925f;
+}
+/*设置返回顶部的样式*/
+#top a{
+	width: 83px;
+	height: 79px;
+	position: fixed;
+	right: 0;
+	bottom:0;
+	z-index: 1;
+	background: url("../img/totop.png") no-repeat 0px 0px;
+}

@@ -1,0 +1,183 @@
+*{
+	margin: 0;
+	padding: 0;
+	font-size:14px;
+}
+ol,ul{
+	/*去掉列表表示*/
+	list-style-type: none;
+}
+a{
+	color: #666;
+	text-decoration: none;
+}
+.left{
+	float: left;
+}
+.right{
+	float: right;
+}
+.show{
+	opacity: 1;
+}
+.fade{
+	opacity: 0;
+}
+/*测试部分*/
+#header,#nav,#footer{
+	height: 100px;
+	width: 100%;
+	/*border: 1px solid #000;*/
+}
+#main{
+	height: 720px;
+	width: 1500px;
+}
+.container{
+	width: 1180px;
+	/*border: 1px solid #f00;*/
+	margin: 0px auto;
+}
+/*顶部部分样式*/
+#header{
+	background-color: #C1CDC1;
+	height: 30px;
+}
+#header .xlwb{
+	width: 20px;
+	height: 17px;
+	background:url("../img/icons.png") no-repeat -47px -95px;
+}
+#header .txwb{
+	width: 20px;
+	height: 20px;
+	background:url("../img/icons.png") no-repeat -27px -92px;
+	/*no-repeat后面是偏移量*/
+}
+#header .tel{
+	font-size: 15px;
+	color: #17925f;
+}
+#header .header_left div{
+	float: left;
+	margin: 5px 10px;
+}
+#header .header_right li{
+	float: left;
+	margin: 5px 10px;
+}
+#header li a:hover{
+	color: #00925f;
+}
+#header .shop_car a{
+	padding-left: 8px;
+}
+#header .shop_car span{
+	width: 19px;
+	height: 16px;
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 10px;
+	background:  url("../img/icons.png") no-repeat 0px -96px;
+}
+/*导航栏样式*/
+#nav{
+	height: 66px;
+	background-color: #EEE;
+}
+#nav img{
+	line-height: 66px;
+	margin: auto 20px;
+}
+#nav ul{
+	width: 150px;
+	margin-right: 20px;
+	float: right;
+	margin-left: 500px;
+}
+#nav li{
+	float: left;
+	margin: auto 20px;
+
+	font-weight: bold;
+	line-height: 66px;
+}
+#nav li a:hover{
+	color: #00925f;
+}
+/*主体部分样式*/
+#main{
+	height: 700px;
+	background-color: #00925F;
+}
+#main .container{
+	width: 1300px;
+}
+#main .aside{
+	width: 300px;
+	height: 700px;
+	background-color: #666;
+}
+#main .useless{
+	height: 200px;
+	/*background-color: #111;*/
+}
+#main .aside button{
+	/*background-color: #00925f;
+	border:none;
+	color: white;*/
+	background-color: write;
+	border:2px solid #00935f;
+	color: black;
+	margin-top: 20px;
+	margin-left: 30px;
+	border-radius: 12px;
+	padding: 15px 30px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 18px;
+}
+#main .aside button:hover{
+	box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24),0 17px 50px 0 rgba(0,0,0,0.19);
+	background-color: #00925f;
+	border:none;
+	color: white;
+}
+#main .content{
+	width: 800px;
+	height: 700px;
+	background-color: #888;
+}
+#main .content div{
+	width: 700px;
+	margin-left: 150px;
+	margin-top: 100px;
+}
+#main .content h1{
+	margin-left: 70px;
+}
+#main .content>div>form{
+	margin-top: 30px;
+}
+#main .content>div>ul{
+	margin-top: 30px;
+}
+#main .content>div>input{
+	margin-top: 20px;
+	margin: 20px auto;
+}
+/*页脚部分样式*/
+#footer{
+	height: 20px;
+	background-color: #C1CDD1;
+}
+#footer  p span{
+	margin:3px 200px 3px 20px;
+}
+#footer p a{
+	margin:auto 20px;
+}
+#footer a:hover{
+	color: #00925f;
+}
