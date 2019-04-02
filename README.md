@@ -39,15 +39,18 @@
       export default web3;
       ```
       保证`infuraUrl`与`web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));`网络地址一致。
-    - 开启gannache软件，获取其助记词填入`config/default.js`的`hdwallet`
+    - 开启gannache软件，获取其助记词填入`config/default.js`的`hdwallet`。
     - 开启chrome的metamask软件，导入ganache软件的所有账户，首先用助记词登录ganache的第一个账户
-      ，然后创自定义RPC
+      ，然后创自定义RPC,保证url和chainID与gannache上的一致。通过私钥导入ganache上的所有其他账户。
+      
       ![Xnip2019-04-02_14-54-21.png](http://hjx-markdown-images.test.upcdn.net/2019/04/02/4488531ce3dcf732a3aa718464c67993.png)
-      保证url和chainID与gannache上的一致。
+      
       ![Xnip2019-04-02_14-55-11.png](http://hjx-markdown-images.test.upcdn.net/2019/04/02/9a63fba8408fd2d1853db77047f2805f.png)
-      通过私钥导入ganache上的所有其他账户
+      
       ![Xnip2019-04-02_14-56-38.png](http://hjx-markdown-images.test.upcdn.net/2019/04/02/908ce9ac633bb366a9bbab012488ca7b.png)
+      
       ![Xnip2019-04-02_14-57-40.png](http://hjx-markdown-images.test.upcdn.net/2019/04/02/2e654bbf5389f656a8dcea9e2ab674ba.png)
+      
       因为在gananche测试链上账户余额都被初始化为100，有了这些余额，我们可以很轻松的与链上的合约对象进行交互，而且不需要
       额外的挖矿，很适合测试dapp的功能
     - 在根路径下，先
@@ -57,6 +60,6 @@
      区块链上。
     
 4. 系统功能展示视频
-  - 优酷地址：
-  - youtube地址：
+  - [优酷地址](https://v.youku.com/v_show/id_XNDEyMjU3NjE2NA==.html?spm=a2h3j.8428770.3416059.1)
+  - [youtube地址](https://www.youtube.com/watch?v=Aje2sdwKY0k&feature=youtu.be)
   
