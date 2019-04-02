@@ -60,6 +60,5 @@
      区块链上。
     
 4. 系统功能展示视频
-  - [优酷地址](https://v.youku.com/v_show/id_XNDEyMjU3NjE2NA==.html?spm=a2h3j.8428770.3416059.1)
-  - [youtube地址](https://www.youtube.com/watch?v=Aje2sdwKY0k&feature=youtu.be)
-  
+    - [优酷地址](https://v.youku.com/v_show/id_XNDEyMjU3NjE2NA==.html?spm=a2h3j.8428770.3416059.1)
+    - [youtube地址](https://www.youtube.com/watch?v=Aje2sdwKY0k&feature=youtu.be)
