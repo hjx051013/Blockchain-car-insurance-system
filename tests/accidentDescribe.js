@@ -8,7 +8,7 @@ const speeds = [10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160];
 const accelerations = [5,10,15,25,30,35,40,45,50];
 const alcoholDetections = ['no','yes'];
 const loss = [100,200,500,800,1000,1500,2000,3000,4000,5000,8000,10000];
-export default {
+module.exports = {
   'site':sites,
   'weather':weathers,
   'roadLevel':roadLevels,

@@ -1,12 +1,5 @@
 <template>
 	<div class="body">
-
-
-
-	
-
-
-
 	<!-- 顶部部分 -->
 	<div id="header">
 		<div class="container">
@@ -180,12 +173,12 @@
 
 
 	</div>
-	
+
 </template>
 
 <script>
 
-	
+
 	export default{
 		name:'index',
 		data(){
@@ -223,7 +216,7 @@
 					this.turns=[0,0,0,1];
 				}
 			},
-			
+
 		}
 	}
 </script>

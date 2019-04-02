@@ -13,7 +13,6 @@ import Company from './components/Company'
 import Police from './components/Police'
 import Alert from './components/Alert'
 import Cars from './components/Cars'
-import Sales from './components/Sales'
 import Accidents from './components/Accidents'
 
 Vue.config.productionTip = false
@@ -43,8 +42,10 @@ const router=new VueRouter({
 		{path:"/owner/:addr",component:Owner},
 		{path:"/company/:addr",component:Company},
 		{path:"/police/:addr",component:Police},
-		{path:"/cars/:addr/:carId",component:Cars},
-		{path:"/sales/:id",component:Sales},
+    //如果queryType为'company'则addr为companyAddr,Id为buyRecordId
+    //如果queryType为'carOwner'则addr为carOwnerAddr,Id为carId
+		{path:"/cars/:addr/:Id",component:Cars},
+    ////此处id为事故记录id,请求参数有type，如果type为'police',那么还有参数policeAddr
 		{path:"/accidents/:id",component:Accidents},
 	]
 })
@@ -54,6 +55,6 @@ const router=new VueRouter({
 new Vue({
 	router,
   el: '#app',
-  components: { App,Registry,Login,Index,Owner,Company,Police,Alert,Cars,Sales,Accidents },
+  components: { App,Registry,Login,Index,Owner,Company,Police,Alert,Cars,Accidents },
   template: '<App/>'
 })

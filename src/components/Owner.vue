@@ -61,7 +61,7 @@
 					          <td v-if="item.buyRecordId==0">未购</td>
 					          <td v-else>已购</td>
 
-					          <td><router-link class="btn btn-defaule" v-bind:to="'/cars/'+$route.params.addr+'/'+item.carId">详情</router-link></td>
+					          <td><router-link class="btn btn-default" v-bind:to="{path:'/cars/'+$route.params.addr+'/'+item.carId,query:{type:'carOwner'}}">详情</router-link></td>
 					        </tr>
 					    </tbody>
 					</table>
@@ -242,33 +242,29 @@
 				 <div style="background-color: #ddd;width: 70%;margin: 30px auto;">
 					<table class="table table-striped">
 					    <thead>
-					        <tr>
-					          <!-- <th>系统识别号</th> -->
-					          <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;牌照</th>
-					          <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;类型</th>
-					          <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;时间</th>
-					          <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;地点</th>
-					          <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;车速</th>
-					          <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;损伤</th>
-					          <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;责任</th>
-					          <th></th>
-					        </tr>
-					      </thead>
-
-					      <tbody>
-					        <tr v-for="item in accidents" v-rainbow>
-					          <!-- <td>{{item.id}}</td> -->
-					          <td>{{item.carId}}</td>
-					          <td>{{item.carName}}</td>
-					          <td>{{item.time}}</td>
-					          <td>{{item.site}}</td>
-					          <td>{{item.speed}}</td>
-					          <td>{{item.damage}}</td>
-					          <td>{{item.responsibility}}</td>
-					         <!--  <td><router-link class="btn btn-defaule" v-bind:to="'/accidents/'+item.id">详情</router-link></td> -->
-					          <td><router-link class="btn btn-defaule" v-bind:to="{path:'/accidents/'+item.id,query:{type:'owner'}}">详情</router-link></td>
-					        </tr>
-					    </tbody>
+                <tr>
+                  <!-- <th>系统识别号</th> -->
+                  <th>牌照</th>
+                  <th>车名</th>
+                  <th>&nbsp;&nbsp;&nbsp;&nbsp;时间</th>
+                  <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;描述</th>
+                  <th>损失</th>
+                  <th>处理状态</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in accidents" v-rainbow>
+                  <!-- <td>{{item.id}}</td> -->
+                  <td>{{item.carNumber}}</td>
+                  <td>{{item.carName}}</td>
+                  <td>{{parseTime(item.time)}}</td>
+                  <td>{{item.describe}}</td>
+                  <td>{{item.loss}}</td>
+                  <td>{{parseResponsibility(item.responsibility)}}</td>
+                  <td><router-link class="btn btn-default" v-bind:to="{path:'/accidents/'+item.Id,query:{type:'owner'}}">详情</router-link></td>
+                </tr>
+            </tbody>
 					</table>
 					<button @click="five=!five" class="btn btn-lg btn-secondary btn-block">返回</button>
 				 </div>
@@ -302,6 +298,7 @@
 
               <tbody>
               <tr v-for="item in insurancedCars" v-rainbow>
+                <!--只有已经参保且获得通过且未逾期的车辆才会有提交事故的资格-->
                 <!-- <td>{{item.id}}</td> -->
                 <td>{{item.carNumber}}</td>
                 <td>{{item.carName}}</td>
@@ -328,6 +325,7 @@
   import web3 from '../../libs/web3';
 	import Alert from './Alert';
 	import AccidentDescribe from '../../libs/accidentDescribe';
+	import CommonFuncs from '../../libs/commonFuncs';
 
 	export default{
 		name:'owner',
@@ -346,12 +344,7 @@
 				carInfo:{},//待添加的车辆
 
 				updateUser:{},//更新用户信息时
-        ownerInfo:{
-          userName:'',
-          gender:true,
-          phone:'',
-          balance:undefined,
-        },//车主信息
+        ownerInfo:{},//车主信息
 
 				alert:'',//消息框
 
@@ -364,19 +357,15 @@
 				confirmPassword:'',//这三个是改密码的
 
 				targetCar:{},//买保险时选择的车辆
-				targetInsurance:{},//买保险时选择的保险
-				insurances:{},//买保险时待选的保险
-
-				buyRecord:{},//买保险最后一步产生的数据记录
-				updateCar:{},//更新车辆的保险位置信息;
 
 				accidents:{},//事故表单
 
-        carOwnerContract:'',//车主合约
         ownerAccount:'',//用户账户地址
         increment: '',//充值金额
         decrement: '',//提现金额
         allInsurances: [],//所有保险方案
+        carOwnerContract:'',//车主合约
+        carOwnerListContract:'',//车主列表合约
         companyListContract:'',//公司列表合约
         buyRecordListContract:'',//订单记录合约
         accidentRecordListContract:'',//事故记录合约
@@ -392,68 +381,82 @@
       console.log(carOwnerAddr);
       this.carOwnerContract = CarOwner(carOwnerAddr);
       //获得提示信息
-      this.getOwnerInfo();
-      this.carOwnerContract.methods.getBalance().call({
+      this.ownerInfo = await CommonFuncs.getOwnerInfo(carOwnerAddr);
+      let balance = await this.carOwnerContract.methods.getBalance().call({
         from: this.ownerAccount
-      }).then((result)=>{
-        this.ownerInfo.balance = parseInt(result);
-      }).catch((err)=>{
-        this.alert = err.message;
       });
+      this.ownerInfo.balance = parseInt(balance);
+      this.displayAlert()
+      this.carOwnerListContract = Contracts['CarOwnerList']
       this.companyListContract = Contracts['CompanyList'];
       this.buyRecordListContract = Contracts['BuyRecordList'];
       this.accidentRecordListContract = Contracts['AccidentRecordList'];
-
+      debugger
       await this.getNowCars();
-      await this.getInsuranceAboutCars();
 		},
 		methods:{
-		  getCompanySchemes(companyAddr) {
-        let companyContract = Company(companyAddr);
-        debugger
-        companyContract.methods.userName().call().then((companyName)=>{
+		  parseTime(time) {
+        let date = new Date(parseInt(time));
+        return date.getFullYear()+"/"+(date.getMonth()+1)+"/"+date.getDate();
+      },
+      parseResponsibility(responsibility) {
+        if(responsibility=='0') return "待判定";
+        else if(responsibility=='1') return '全责';
+        else if(responsibility=='2') return '主要责任';
+        else if(responsibility=='3') return '同等责任';
+        else if(responsibility=='4') return '部分责任';
+        else if(responsibility=='5') return '无责';
+        else return '';
+      },
+		  async getAccidents() {
+        try {
+          let accidentIds = await this.accidentRecordListContract.methods.getRecordIdsByOwnerAddr(this.carOwnerContract.options.address).call();
+          console.log(accidentIds);
+          this.accidents = [];
+          for(var i = 0; i < accidentIds.length; i++) {
+            let accidentInfo = await CommonFuncs.getAccidentRecordInfo(this.accidentRecordListContract,accidentIds[i]);
+            let carInfo = await CommonFuncs.getCarInfo(accidentInfo.carOwnerAddr,accidentInfo.carId);
+            accidentInfo.carNumber = carInfo.carNumber;
+            accidentInfo.carName = carInfo.carName;
+            this.accidents.push(accidentInfo);
+          }
+        } catch (e) {
+          this.alert = e.message;
+        }
+      },
+		  async getCompanySchemes(companyAddr) {
+		    try {
+          let companyContract = Company(companyAddr);
+          debugger
+          let companyName = await companyContract.methods.userName().call()
           console.log(companyName);
-          companyContract.methods.getSchemeIds().call().then(async (schemeIds)=>{
-            console.log(schemeIds);
-            const schemeInfoList = await Promise.all(
-              schemeIds.map((schemeId) =>
-                companyContract
-                  .methods.getSchemeInfoById(schemeId)
-                  .call().catch((err)=>{
-                  this.alert = err.message;
-                })
-              )
-            );
-            console.log(schemeInfoList);
-            for(var i = 0; i < schemeInfoList.length; i++) {
-              let schemeInfo = {};
-              schemeInfo.schemeId = schemeInfoList[i][0];
-              schemeInfo.schemeName = schemeInfoList[i][1];
-              schemeInfo.lastTime = schemeInfoList[i][2];
-              schemeInfo.price = schemeInfoList[i][3];
-              schemeInfo.payOut = schemeInfoList[i][4];
-              schemeInfo.onSale = schemeInfoList[i][5];
+          let schemeIds = await companyContract.methods.getSchemeIds().call()
+          console.log(schemeIds);
+          for(var i = 0; i < schemeIds.length; i++) {
+            let schemeInfo = await CommonFuncs.getSchemeInfo(companyAddr,schemeIds[i]);
+            if(schemeInfo.onSale) {
               schemeInfo.companyName = companyName;
               schemeInfo.companyAddr = companyAddr;
               this.allInsurances.push(schemeInfo);
             }
-          }).catch((err)=>{
-            this.alert = err.message;
-          });
-        }).catch((err)=>{
-          this.alert = err.message;
-        });
-
+          }
+        } catch (e) {
+          this.alert = e.message;
+        }
       },
-      getAllSchemes() {
-		    debugger
-        this.allInsurances = [];
-        this.companyListContract.methods.getCompanyList().call().then((companyAddrList)=>{
+      async getAllSchemes() {
+		    try {
+          debugger
+          this.allInsurances = [];
+          let companyAddrList = await this.companyListContract.methods.getCompanyList().call();
           console.log(companyAddrList);
-          companyAddrList.map((companyAddr)=>{
-            this.getCompanySchemes(companyAddr);
-          })
-        });
+          for(var i = 0; i < companyAddrList.length; i++) {
+            this.getCompanySchemes(companyAddrList[i]);
+          }
+        } catch (e) {
+          this.alert = e.message;
+        }
+
       },
       updateBalance(isInc) {
         debugger
@@ -475,39 +478,24 @@
           });
         }
       },
-		  getOwnerInfo() {
-        this.carOwnerContract.methods.getOwnerInfo().call().then((result) => {
-          this.ownerInfo.userName = result[0];
-          this.ownerInfo.gender = result[1]?'男':'女';
-          this.ownerInfo.phone = result[2];
-          console.log(this.ownerInfo);
+		  async getOwnerInfo() {
+		    try {
+          this.ownerInfo = await CommonFuncs.getOwnerInfo(this.carOwnerContract.options.address);
           this.displayAlert();
-        }).catch((err)=>{
+          let balance = await this.carOwnerContract.methods.getBalance().call({
+            from: this.ownerAccount
+          });
+          this.ownerInfo.balance = parseInt(balance);
+        }catch(err){
           this.alert = err.message;
-        });
+        };
       },
 		  async getNowCars() {
 		    try {
-          let carIds = await this.carOwnerContract.methods.getCarIds().call();
-          console.log(carIds);
-          const carInfoList = await Promise.all(
-            carIds.map((carId) =>
-              this.carOwnerContract
-                .methods.getCarInfoById(carId)
-                .call().catch((err)=>{
-                this.alert = err.message;
-              })
-            )
-          );
-          console.log(carInfoList);
           this.cars = [];
-          for(var i = 0; i < carInfoList.length; i++) {
-            let carInfo = {};
-            carInfo.carId = carInfoList[i][0];
-            carInfo.carNumber = carInfoList[i][1];
-            carInfo.carName = carInfoList[i][2];
-            carInfo.carAge = carInfoList[i][3];
-            carInfo.buyRecordId = carInfoList[i][4];
+          let carIds = await this.carOwnerContract.methods.getCarIds().call();
+          for(var i = 0; i < carIds.length; i++) {
+            let carInfo = await CommonFuncs.getCarInfo(this.$route.params.addr,carIds[i]);
             this.cars.push(carInfo);
           }
         } catch (e) {
@@ -522,26 +510,26 @@
         for(var i = 0; i < this.cars.length; i++) {
           if(this.cars[i].buyRecordId!=0) {
             try {
-              let result = await this.accidentRecordList.getBuyRecordById(this.cars[i].buyRecordId).call();
-              if(result[6]==1) {//已经获得同意并且没有逾期才可以提交事故
-                let overtime = await this.overTime(result);//根据buyRecordId就能判断该条保险记录有无逾期
-                if(!overtime) {
+              let buyRecord = await CommonFuncs.getBuyRecordInfo(this.buyRecordListContract,this.cars[i].buyRecordId);
+              if(buyRecord.processState==1) {//已经获得同意并且没有逾期才可以提交事故
+                let overtime = await CommonFuncs.overTime(buyRecord.companyAddr,buyRecord.schemeId,buyRecord.startTime);//根据buyRecordId就能判断该条保险记录有无逾期
+                if(!overtime[0]) {//overtime[0]为true代表逾期,没有逾期的车辆进入insurancedCars数组
                   let insurancedCarInfo = this.cars[i];
-                  insurancedCarInfo.carOwnerAddr = result[1];
-                  insurancedCarInfo.carId = result[2];
-                  insurancedCarInfo.companyAddr = result[3];
-                  insurancedCarInfo.schemeId = result[4];
+                  insurancedCarInfo.carOwnerAddr = buyRecord.carOwnerAddr;
+                  insurancedCarInfo.carId = buyRecord.carId;
+                  insurancedCarInfo.companyAddr = buyRecord.companyAddr;
+                  insurancedCarInfo.schemeId = buyRecord.schemeId;
                   this.insurancedCars.push(insurancedCarInfo);
                 } else {//已经逾期的订单对应车辆可以购买保险
                   this.unInsurancedCars.push(this.cars[i]);
                 }
-              } else if(result[6]==2) {//已经被拒绝订单的车辆可以购买保险
+              } else if(buyRecord.processState==2) {//已经被拒绝订单的车辆可以购买保险
                 this.unInsurancedCars.push(this.cars[i]);
               }
             } catch (e) {
               this.alert = e.message;
             }
-          } else {
+          } else {//未投保的车辆可以购买保险
             this.unInsurancedCars.push(this.cars[i]);
           }
         }
@@ -558,8 +546,8 @@
           this.alert='晚上好，';
         }
 
-        this.alert+=this.ownerInfo.userName;
-        this.alert+=this.ownerInfo.gender=='男'?'先生':'女士';
+        this.alert+=this.ownerInfo.ownerName;
+        this.alert+=this.ownerInfo.gender?'先生':'女士';
         this.greeting = this.alert;
       },
 			clickOne(){
@@ -570,28 +558,38 @@
 			},
 			async clickTwo(){
 				this.two=!this.two;
+				if(this.two) {
+          await this.getNowCars();
+          debugger
+        }
 			},
-			clickThree(){
+			async clickThree(){
 				this.three=!this.three;
-				this.increment='';
-				this.decrement='';
+				if(this.three) {
+          this.increment='';
+          this.decrement='';
+          let balance = await this.carOwnerContract.methods.getBalance().call({
+            from: this.ownerAccount
+          });
+          this.ownerInfo.balance = parseInt(balance);
+        }
 			},
-			clickFour(){
+			async clickFour(){
 				this.four=!this.four;
+				if(this.four) {
+          await this.getInsuranceAboutCars();
+        }
 			},
-			clickFive(){
-				this.five=!this.five;
-				this.$http.get("http://localhost:3000/accidents?ownerId="+this.user.id)
-				.then(function(response){
-					this.accidents=response.body;
-					console.log(this.accidents);
-				})
-
-			},
-			clickSix(){
+      async clickFive(){
+        this.five=!this.five;
+        if(this.five) {
+          await this.getAccidents();
+        }
+      },
+			async clickSix(){
 				this.six=!this.six;
         if(this.six) {
-
+          await this.getInsuranceAboutCars();
         }
 			},
       async overTime(buyRecordInfo) {//根据订单记录判断是否逾期
@@ -599,10 +597,10 @@
 		    let companyContract = Company(companyAddr);
 		    let schemeInfo = await companyContract.getSchemeInfoById(schemeId).call();
         let lastTime = parseInt(schemeInfo[3]);//以年为单位
-        let startDate = new Date(startTime);
-        startDate.setFullYear(startDate.getFullYear()+lastTime);
-        if(new Date().valueOf()>startDate.valueOf()) return true;
-        else return false;
+        let date = new Date(startTime);
+        date.setFullYear(date.getFullYear()+lastTime);//逾期年月日
+        if(new Date().valueOf()>date.valueOf()) return [true,date];//逾期时间与当前时间比较，如果大于就逾期
+        else return [false,date];
       },
 			async addCar(){
 			  debugger
@@ -616,7 +614,7 @@
             });
             this.alert = "车辆信息添加成功";
             await this.getNowCars();//在添加车辆后更新车辆信息
-            this.getInsuranceAboutCars();//在添加车辆后更新insurancediCars和unInsurancedCars
+            await this.getInsuranceAboutCars();//在添加车辆后更新insurancediCars和unInsurancedCars
           } catch (e) {
             console.log(e.message);
             this.alert = e.message;
@@ -677,84 +675,17 @@
         console.log(item);
         debugger
         console.log(this.carOwnerContract.options.address+","+this.targetCar.carId+","+item.companyAddr+","+item.schemeId+","+startTime+","+item.price);
-		    this.buyRecordListContract.methods.addBuyRecord(this.carOwnerContract.options.address,
+		    this.buyRecordListContract.methods.addBuyRecord(this.carOwnerListContract.options.address,this.carOwnerContract.options.address,
               this.targetCar.carId,item.companyAddr,item.schemeId,startTime,item.price).send({
           from:this.ownerAccount,gas:5000000
-        }).then(()=>{
-
-            this.carOwnerContract.methods.buyInsurance(this.targetCar.carId,buyRecordId).send({
-              from: this.ownerAccount, gas: 5000000
-            }).then(()=>{
-              this.alert = "投保成功";
-            }).catch((err)=>{
-              this.alert = err.message;
-            });
+        }).then(async ()=>{
+            this.alert = "投保成功";
+            //在修改车辆的buyRecordId后需要更新cars,insurancedCars,unInsurancedCars
+            await this.getNowCars();
+            this.getInsuranceAboutCars();
           }).catch((err)=>{
             this.alert = err.message;
         })
-
-				// this.targetInsurance=item;
-				// console.log("打印的是目标保险信息");
-				// console.log(this.targetInsurance);
-
-				//下面是生成buyRecords表单的代码
-				// 谁， 在 什么时候， 给 谁， 买了 什么东西，
-				// this.buyRecord.buyerId=this.user.id;
-				// this.buyRecord.buyerName=this.user.name;
-				// this.buyRecord.buyerPhone=this.user.phone;
-        //
-				// this.buyRecord.carId=this.targetCar.id;
-				// this.buyRecord.carNumber=this.targetCar.number;
-				// this.buyRecord.carName=this.targetCar.name;
-				// this.buyRecord.carAge=this.targetCar.age;
-        //
-				// this.buyRecord.companyId=this.targetInsurance.companyId;
-				// this.buyRecord.companyName=this.targetInsurance.companyName;
-				// this.buyRecord.companyPhone=this.targetInsurance.companyPhone;
-        //
-				// this.buyRecord.insuranceId=this.targetInsurance.id;
-				// this.buyRecord.insuranceNumber=this.targetInsurance.number;
-				// this.buyRecord.insuranceName=this.targetInsurance.name;
-				// this.buyRecord.insuranceDuration=this.targetInsurance.duration;
-				// this.buyRecord.insurancePrice=this.targetInsurance.price;
-				// this.buyRecord.insuranceCompensation=this.targetInsurance.compensation;
-        //
-        //
-				// var year=parseInt(new Date().getFullYear())+parseInt(this.buyRecord.insuranceDuration);
-				// var month=new Date().getMonth()+1;
-				// var day=new Date().getDate();
-				// this.buyRecord.overtime=year+'-'+month+'-'+day;
-				// this.buyRecord.state="待确认";
-				// //console.log(year+'-'+month+'-'+day);
-				// console.log("将要打印生成的表单");
-				// console.log(this.buyRecord);
-        //
-        //
-				// 	//console.log("现在更新车辆信息，下面打印更新结果");
-				// 	this.updateCar=this.targetCar;
-				// 	this.updateCar.insuranceId=this.buyRecord.insuranceName;
-				// 	// console.log(this.updateCar);
-        //
-				// this.$http.post("http://localhost:3000/buyRecords/",this.buyRecord)
-				// .then(function(response){
-				// 	// console.log("新建的记录表单发送成功，下面打印返回值");
-				// 	// console.log(response);
-        //
-        //
-        //
-				// 	this.$http.put("http://localhost:3000/cars/"+this.updateCar.id,this.updateCar)
-				// 	.then(function(response){
-				// 	// console.log("车辆信息更新成功");
-				// 	// console.log(response);
-        //
-				// 	alert("已提交购买申请，等待保险公司确认");
-				// 	this.fourr=!this.fourr;
-        //
-				// 	})
-
-
-				// })
-
 			},
       //生成从minNum到maxNum的随机数,随机区间为[minNum,maxNum]
       randomNum(minNum,maxNum){
@@ -773,15 +704,16 @@
                       +","+this.randomVal(AccidentDescribe.speed)+","+this.randomVal(AccidentDescribe.acceleration)
                       +","+this.randomVal(AccidentDescribe.alcohol);
         let curTime = new Date().valueOf();
-        let loss = parseInt(this.randomVal(AccidentDescribe.loss));//事故损失
-        this.accidentRecordListContract.addAccidentRecord(item.carOwnerAddr,
-          item.carId,curTime,describe,item.companyAddr,item.schemeId,loss)
-          .then(()=>{
+        let loss = this.randomVal(AccidentDescribe.loss);//事故损失
+        debugger
+        this.accidentRecordListContract.methods.addAccidentRecord(this.carOwnerListContract.options.address,item.carOwnerAddr,
+          item.carId,curTime,describe,item.companyAddr,item.schemeId,loss).send({
+          from:this.ownerAccount,gas:5000000
+        }).then(()=>{
             alert("已将事故信息上传！");
           }).catch((err)=>{
             this.alert = err.message;
         });
-
       },
 
 

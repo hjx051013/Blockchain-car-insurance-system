@@ -55,6 +55,13 @@ contract CarOwnerList is Utils{
     function getCarownerList() public view returns (address[]) {
         return carOwnerList;
     }
+
+    function isCarOwner(address ownerAddr) public view returns (bool) {
+        for(uint i = 0; i < carOwnerList.length; i++) {
+            if(ownerAddr==carOwnerList[i]) return true;
+        }
+        return false;
+    }
 }
 
 contract CarOwner is Utils{
@@ -161,7 +168,7 @@ contract CarOwner is Utils{
 
 
 
-    function buyInsurance(uint carId,uint buyRecordId)  public ownerOnly{
+    function buyInsurance(uint carId,uint buyRecordId)  public ownerOrSystemOnly{
         require(carMap[carId].isValid);
         carMap[carId].buyRecordId = buyRecordId;
     }
@@ -187,6 +194,13 @@ contract CompanyList is Utils {
 
     function isNotRegistered(address account) internal view returns (bool) {
         return creatorCompanyMap[account]==0;//if account hasn't created contract,the mapping's default value is 0
+    }
+
+    function isCompany(address companyAddr) public view returns (bool) {
+        for(uint i = 0; i < companyList.length; i++) {
+            if(companyAddr==companyList[i]) return true;
+        }
+        return false;
     }
 
     function verifyPwd(string userName,string password) public view returns (bool) {
@@ -324,6 +338,12 @@ contract PolicerList is Utils{
         return compareStrings(policer.userName(),userName)&&policer.pwdRight(password);
     }
 
+    function isPolice(address policerAddr) public view returns(bool){
+        for(uint i = 0; i < policerList.length; i++) {
+            if(policerList[i]==policerAddr) return true;
+        }
+        return false;
+    }
     function getPolicerList() public view returns (address[]){
         return policerList;
     }
@@ -417,8 +437,11 @@ contract BuyRecordList {
         return buyRecords[recordId].isValid;//isValid==true means such record exists
     }
 
-    function addBuyRecord(address carOwner,uint carId,address company,uint schemeId,uint startTime,uint price) public{
+    function addBuyRecord(address carOwnerListAddr,address carOwner,uint carId,address company,uint schemeId,uint startTime,uint price) public{
         CarOwner carOwnerContract = CarOwner(carOwner);
+        require(msg.sender==carOwnerContract.owner());
+        CarOwnerList carOwnerList = CarOwnerList(carOwnerListAddr);
+        require(carOwnerList.isCarOwner(carOwner));
         require(carOwnerContract.getBalance()>price);
         carOwnerContract.updateBalance(-int(price));//substract carOwner's balance
         uint nowBuyRecordId = recordList.length>0?recordList[recordList.length-1]+1:1;
@@ -432,6 +455,7 @@ contract BuyRecordList {
         buyRecords[nowBuyRecordId].processState = 0;
         buyRecords[nowBuyRecordId].Balance = price;
         buyRecords[nowBuyRecordId].isValid = true;
+        carOwnerContract.buyInsurance(carId,nowBuyRecordId);
 
     }
 
@@ -440,8 +464,12 @@ contract BuyRecordList {
          return recordList[recordList.length-1];
      }
 
-    function doBuyRecord(address companyAddr,uint recordId,bool approve,uint maxPayout) public{
+    function doBuyRecord(address companyListAddr,address companyAddr,uint recordId,bool approve,uint maxPayout) public {
         require(existRecord(recordId));
+        Company companyContract = Company(companyAddr);
+        require(companyContract.owner()==msg.sender);//Only company can do buyRecord
+        CompanyList companyList = CompanyList(companyListAddr);
+        require(companyList.isCompany(companyAddr));
         BuyRecord storage buyRecord = buyRecords[recordId];
         require(buyRecord.company==companyAddr); //the record's company address must equal to the companyAddr
         require(buyRecord.processState==0);//the record is unprocessed
@@ -449,10 +477,12 @@ contract BuyRecordList {
             Company company = Company(companyAddr);
             company.updateBalance(int(buyRecord.Balance)-int(maxPayout));//transfer money to company
             buyRecord.Balance = maxPayout;
+            buyRecord.processState = 1;
         } else {
             CarOwner carOwner = CarOwner(buyRecord.carOwner);
             carOwner.updateBalance(int(buyRecord.Balance));//return money to carOwner
             buyRecord.Balance = 0;
+            buyRecord.processState = 2;
         }
     }
 
@@ -461,6 +491,20 @@ contract BuyRecordList {
         buyRecord.Balance = newBalance;
     }
 
+    //process the balance of those buy records who are out of date
+    function cleanOutOfDate(uint recordId,address policerListAddr,address policerAddr) public{
+        require(existRecord(recordId));
+        Policer policer = Policer(policerAddr);
+        require(policer.owner()==msg.sender);//Only policer can doAccidentRecord
+        PolicerList policerList = PolicerList(policerListAddr);
+        require(policerList.isPolice(policerAddr));
+        BuyRecord storage buyRecord = buyRecords[recordId];
+
+        Company targetCompany = Company(buyRecord.company);
+        //send the balance of the butRecord to target company
+        targetCompany.updateBalance(int(buyRecord.Balance));
+        buyRecord.Balance = 0;
+    }
 }
 
 contract AccidentRecordList {
@@ -474,21 +518,26 @@ contract AccidentRecordList {
         //accident information
         uint time;
         string describe;//addr,damage,roadLevel,roadQuality,trafficDescribe,alchhol,speed,accelarate
-        uint loss;
+        uint loss;//the carOwner's loss in the accident
+        uint payout;//store how much is the payout in the accident
 
         address company;
         uint schemeId;
 
         address policer;
-        //0:unprocessed; 1:no responsiblity; 2: smaller responsiblity
-        //3:equal responsiblity; 4: bigger responsiblity; 5: 100% responsiblity
+        //0:unprocessed; 1:100% responsiblity; 2: 75% responsiblity
+        //3:50% responsiblity; 4: 25% responsiblity; 5: 0 responsiblity
         uint responsiblity;
 
         bool isValid;
     }
 
-    function addAccidentRecord(address carOwner,uint carId,uint time,string describe,
+    function addAccidentRecord(address carOwnerListAddr,address carOwner,uint carId,uint time,string describe,
         address company,uint schemeId,uint loss) public {
+        CarOwner carOwnerContract = CarOwner(carOwner);
+        require(carOwnerContract.owner()==msg.sender);//Only carOwner can add AccidentRecord
+        CarOwnerList carOwnerList = CarOwnerList(carOwnerListAddr);
+        require(carOwnerList.isCarOwner(carOwner));
         uint nowAccidentRecordId = recordList.length>0?recordList[recordList.length-1]+1:1;
         recordList.push(nowAccidentRecordId);
         accidentRecords[nowAccidentRecordId].Id = nowAccidentRecordId;
@@ -497,11 +546,16 @@ contract AccidentRecordList {
         accidentRecords[nowAccidentRecordId].time = time;
         accidentRecords[nowAccidentRecordId].describe = describe;
         accidentRecords[nowAccidentRecordId].loss = loss;
+        accidentRecords[nowAccidentRecordId].payout = 0;
         accidentRecords[nowAccidentRecordId].company = company;
         accidentRecords[nowAccidentRecordId].schemeId = schemeId;
         accidentRecords[nowAccidentRecordId].policer = 0;
         accidentRecords[nowAccidentRecordId].responsiblity = 0;//waiting for processed
         accidentRecords[nowAccidentRecordId].isValid = true;
+    }
+
+    function getRecordList() public view returns (uint[]){
+        return recordList;
     }
 
     function getRecordIdsByOwnerAddr(address carOwnerAddr) public view returns (uint[]){
@@ -565,13 +619,13 @@ contract AccidentRecordList {
     }
 
     function getRecordInfoById(uint recordId) public view
-    returns(uint,address,uint,uint,string,uint,address,uint,address,uint){
+    returns(uint,address,uint,uint,string,uint,address,uint,address,uint,uint){
         require(existRecord(recordId));
         AccidentRecord storage accidentRecord = accidentRecords[recordId];
         return (accidentRecord.Id,accidentRecord.carOwner,accidentRecord.carId,
                 accidentRecord.time,accidentRecord.describe,accidentRecord.loss,
                 accidentRecord.company,accidentRecord.schemeId,
-                accidentRecord.policer,accidentRecord.responsiblity);
+                accidentRecord.policer,accidentRecord.responsiblity,accidentRecord.payout);
     }
 
 
@@ -579,9 +633,13 @@ contract AccidentRecordList {
         return accidentRecords[recordId].isValid;//isValid==true means such record exists
     }
 
-    function doAccidentRecord(address BuyRecordListAddr,uint buyRecordId,uint accidentRecordId,
+    function doAccidentRecord(address policerListAddr,address BuyRecordListAddr,uint buyRecordId,uint accidentRecordId,
         address policerAddr,address carOwnerAddr,uint responsiblity,uint buyRecordAvail,uint loss) public {
         require(existRecord(accidentRecordId));
+        Policer policer = Policer(policerAddr);
+        require(policer.owner()==msg.sender);//Only policer can doAccidentRecord
+        PolicerList policerList = PolicerList(policerListAddr);
+        require(policerList.isPolice(policerAddr));
         AccidentRecord storage accidentRecord = accidentRecords[accidentRecordId];
         //compute the real payout according to buyRecordAvail,loss and responsiblity
         uint payOut = getPayout(buyRecordAvail,loss,responsiblity);
@@ -593,6 +651,7 @@ contract AccidentRecordList {
         buyRecordList.updateBuyRecordBalance(buyRecordId,buyRecordAvail-payOut);
         accidentRecord.policer = policerAddr;
         accidentRecord.responsiblity = responsiblity;
+        accidentRecord.payout = payOut;
     }
 
     function getPayout(uint avail,uint loss,uint responsiblity) internal pure returns (uint){

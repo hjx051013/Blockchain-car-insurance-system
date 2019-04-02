@@ -1,9 +1,8 @@
+const AccidentDescribe = require("./accidentDescribe");
+const TestFuncs = require('./TestFuncs');
 const assert = require('assert');
 const path = require('path');
-const ganache = require('ganache-cli');
-const Web3 = require('web3');
-
-const web3 = new Web3(ganache.provider());
+const web3 = require('./web3')
 
 const AccidentRecordList = require(path.resolve(__dirname, '../compiled/AccidentRecordList.json'));
 const BuyRecordList = require(path.resolve(__dirname, '../compiled/BuyRecordList.json'));
@@ -24,6 +23,14 @@ let policerList;
 let carOwner;
 let company;
 let policer;
+
+function randomNum(minNum,maxNum){
+  return parseInt(Math.random()*(maxNum-minNum+1)+minNum,10);
+}
+function randomVal(valArr) {
+  let index = randomNum(0,valArr.length-1);
+  return valArr[index];
+}
 
 describe('icbc contract',() => {
   beforeEach(async () => {
@@ -89,6 +96,10 @@ describe('icbc contract',() => {
     assert.equal(gender,true);
     assert.equal(phone,"15700122326");
     console.log("name is "+ownerInfo[0]+",gender is "+(ownerInfo[1]?"man":"women")+",phone is "+phone);
+    //验证getOwnerInfo js接口方法
+    ownerInfo = await TestFuncs.getOwnerInfo(carOwner.options.address);
+    console.log("验证getOwnerInfo js接口方法：")
+    console.log(ownerInfo);
 
     await carOwner.methods.modifyOwnerInfo("hyk",false,"234567").send({
       from: accounts[0], gas: '5000000'
@@ -105,12 +116,12 @@ describe('icbc contract',() => {
     assert.equal(pwdRight,true);
 
     var balance = await carOwner.methods.getBalance().call();
-    assert(balance,10000);
+    assert.equal(balance,10000);
     await carOwner.methods.updateBalance(20000).send({
       from: accounts[0], gas: '5000000'
     });
     balance = await carOwner.methods.getBalance().call();
-    assert(balance,30000);
+    assert.equal(balance,30000);
 
     //add a car
     await carOwner.methods.addCar("浙A541","bmw",2).send({
@@ -121,6 +132,15 @@ describe('icbc contract',() => {
     });
     const carIds = await carOwner.methods.getCarIds().call();
     console.log(carIds);
+    //验证getCarInfo接口方法
+    let cars = [];
+    for(var i = 0; i < carIds.length; i++) {
+      let carInfo = await TestFuncs.getCarInfo(carOwner.options.address,carIds[i]);
+      cars.push(carInfo);
+    }
+    console.log("验证getCarInfo接口方法：")
+    console.log(cars);
+
     const carInfoList = await Promise.all(
       carIds.map((carId) =>
         carOwner
@@ -128,10 +148,11 @@ describe('icbc contract',() => {
           .call()
       )
     );
-    const cars = carInfoList.map((carId,i) => {
+    cars = carInfoList.map((carId,i) => {
       return Object.values(carInfoList[i])
     });
     console.log(cars);
+
     //验证carOwnerList方法
     pwdRight = await carOwnerList.methods.verifyPwd("hyk","234").call({from:accounts[0]});
     assert(pwdRight,true);
@@ -150,13 +171,15 @@ describe('icbc contract',() => {
     const companyNo = await company.methods.companyNo().call({from:accounts[1]});
     const phone = await company.methods.phone().call({from:accounts[1]});
     var companyInfo = await company.methods.getCompanyInfo().call({from:accounts[1]});
-
     assert.equal(ownerAddr,accounts[1]);
     assert.equal(accidentRecordListAddr,accidentRecordList.options.address);
     assert.equal(buyRecordListAddr,buyRecordList.options.address);
     assert.equal(userName,"hyk");
     assert.equal(companyNo,"ABCD");
     assert.equal(phone,"14562");
+    //验证getCompanyInfo js接口方法
+    companyInfo = await TestFuncs.getCompanyInfo(company.options.address);
+    console.log("验证getCompanyInfo js接口方法：")
     console.log(companyInfo);
     //验证信息修改查询方法
     try {
@@ -202,13 +225,20 @@ describe('icbc contract',() => {
     });
     const schemeIds = await company.methods.getSchemeIds().call();
     console.log(schemeIds);
+    let schemes = [];
+    for(var i = 0; i < schemeIds.length; i++) {
+      let schemeInfo = await TestFuncs.getSchemeInfo(company.options.address,schemeIds[i]);
+      schemes.push(schemeInfo);
+    }
+    console.log("验证getSchemeInfo查询方案信息接口：")
+    console.log(schemes);
     const schemeInfoList = await Promise.all(
       schemeIds.map((schemeId) => {
         return company.methods.getSchemeInfoById(schemeId)
           .call();
       })
     );
-    const schemes = schemeInfoList.map((schemeId,i)=> {
+    schemes = schemeInfoList.map((schemeId,i)=> {
       return Object.values(schemeInfoList[i])
     })
     console.log(schemes);
@@ -234,6 +264,10 @@ describe('icbc contract',() => {
     assert.equal(phone,"1234");
     assert.equal(policerNo,"18888");
     console.log("name is "+policerInfo[0]+",policerNo is "+policerInfo[1]+",gender is "+(policerInfo[3]?"man":"women")+",phone is "+policerInfo[2]);
+    //验证getPoliceInfo接口方法
+    policerInfo = await TestFuncs.getPoliceInfo(policer.options.address);
+    console.log("验证getPoliceInfo接口方法");
+    console.log(policerInfo);
 
     await policer.methods.modifyPolicerInfo("hyk1","14563",false).send({
       from: accounts[2], gas: '5000000'
@@ -264,26 +298,45 @@ describe('icbc contract',() => {
       from: accounts[1], gas: '5000000'
     });
 
-    //验证addButRecord方法
-    await buyRecordList.methods.addBuyRecord(carOwner.options.address,1,company.options.address,1,120000,1200).send({
+    //验证addBuyRecord方法
+    await buyRecordList.methods.addBuyRecord(carOwnerList.options.address,carOwner.options.address,1,company.options.address,1,new Date("2018/02/03").valueOf(),1200).send({
       from:accounts[0], gas: '5000000'
     });
     var balance = await carOwner.methods.getBalance().call();
     assert.equal(balance,8800);
     var lastRecordId = await buyRecordList.methods.getLastBuyRecordId().call();
     assert.equal(lastRecordId,1);
-    await buyRecordList.methods.addBuyRecord(carOwner.options.address,2,company.options.address,2,120000,800).send({
+    let carInfo = await carOwner.methods.getCarInfoById(1).call();
+    assert(carInfo[4],1);
+
+    await buyRecordList.methods.addBuyRecord(carOwnerList.options.address,carOwner.options.address,2,company.options.address,2,new Date("2017/04/03").valueOf(),800).send({
       from:accounts[0], gas: '5000000'
     });
     balance = await carOwner.methods.getBalance().call();
     assert.equal(balance,8000);
     lastRecordId = await buyRecordList.methods.getLastBuyRecordId().call();
     assert.equal(lastRecordId,2);
+    carInfo = await carOwner.methods.getCarInfoById(2).call();
+    assert(carInfo[4],2);
     //验证确实插入了两条记录
     const recordIds = await buyRecordList.methods.getRecordList().call();
     console.log(recordIds);
     assert.equal(recordIds[0],1);
     assert.equal(recordIds[1],2);
+
+    //验证getBuyRecordInfo接口方法
+    let recordInfos = [];
+    let bookInfos = []
+    for(var i = 0; i < recordIds.length; i++) {
+      let recordInfo = await TestFuncs.getBuyRecordInfo(buyRecordList,recordIds[i]);
+      recordInfos.push(recordInfo);
+      let bookInfo = await TestFuncs.parseBookInfo(recordInfo);
+      bookInfos.push(bookInfo);
+    }
+    console.log("验证getBuyRecordInfo接口方法：")
+    console.log(recordInfos);
+    console.log("验证parseBookInfo接口方法：");
+    console.log(bookInfos);
 
     let buyRecord1 = await buyRecordList.methods.getBuyRecordById(1).call();
     assert.equal(buyRecord1[0],1);
@@ -291,7 +344,7 @@ describe('icbc contract',() => {
     assert.equal(buyRecord1[2],1);
     assert.equal(buyRecord1[3],company.options.address);
     assert.equal(buyRecord1[4],1);
-    assert.equal(buyRecord1[5],120000);
+    assert.equal(buyRecord1[5],new Date("2018/02/03").valueOf());
     assert.equal(buyRecord1[6],0);
     assert.equal(buyRecord1[7],1200);
     // await buyRecordList.methods.updateBuyRecordBalance(1,1000).send({
@@ -306,9 +359,10 @@ describe('icbc contract',() => {
     assert.equal(buyRecord2[2],2);
     assert.equal(buyRecord2[3],company.options.address);
     assert.equal(buyRecord2[4],2);
-    assert.equal(buyRecord2[5],120000);
+    assert.equal(buyRecord2[5],new Date("2017/04/03").valueOf());
     assert.equal(buyRecord2[6],0);
     assert.equal(buyRecord2[7],800);
+
     // await buyRecordList.methods.updateBuyRecordBalance(2,700).send({
     //   from:accounts[0], gas: '5000000'
     // });
@@ -317,22 +371,29 @@ describe('icbc contract',() => {
 
     //验证doBuyRecord方法
     //验证approve参保
-    await buyRecordList.methods.doBuyRecord(company.options.address,1,true,5000).send({
+    await buyRecordList.methods.doBuyRecord(companyList.options.address,company.options.address,1,true,5000).send({
       from:accounts[1],gas:5000000
     });
+
     let companyBalance = await company.methods.getBalance().call({
       from: accounts[1]
     });
     assert.equal(companyBalance,6200);//10000+1200-5000
     buyRecord1 = await buyRecordList.methods.getBuyRecordById(1).call();
     assert.equal(buyRecord1[7],5000);//订单绑定金额为最大赔付
+    assert.equal(buyRecord1[6],1);//订单处理状态变为1
     let ownerBalance = await carOwner.methods.getBalance().call({
       from:accounts[0]
     });
     assert.equal(ownerBalance,8000);//车主余额不发生变化
+    let recordInfo = await TestFuncs.getBuyRecordInfo(buyRecordList,1);
+    let bookInfo = await TestFuncs.parseBookInfo(recordInfo);
+    console.log("同意参保后的getBuyRecordInfo和parseBookInfo方法验证");
+    console.log(recordInfo);
+    console.log(bookInfo);
     //
     //验证reject参保
-    await buyRecordList.methods.doBuyRecord(company.options.address,2,false,4000).send({
+    await buyRecordList.methods.doBuyRecord(companyList.options.address,company.options.address,2,false,4000).send({
       from:accounts[1],gas:5000000
     });
     companyBalance = await company.methods.getBalance().call({
@@ -341,11 +402,31 @@ describe('icbc contract',() => {
     assert(companyBalance,10000);//不扣也不增
     buyRecord2 = await buyRecordList.methods.getBuyRecordById(2).call();
     assert.equal(buyRecord2[7],0);//订单绑定金额变为0
+    assert.equal(buyRecord2[6],2);//订单处理状态变为2
     ownerBalance = await carOwner.methods.getBalance().call({
       from:accounts[0]
     });
     assert(ownerBalance,8800);//保险费退还给车主
+    recordInfo = await TestFuncs.getBuyRecordInfo(buyRecordList,2);
+    bookInfo = await TestFuncs.parseBookInfo(recordInfo);
+    console.log("拒绝参保后的getBuyRecordInfo和parseBookInfo方法验证");
+    console.log(recordInfo);
+    console.log(bookInfo);
 
+    // 验证cleanOutOfDate方法
+    let companyBalance1 = await company.methods.getBalance().call({
+      from: accounts[1]
+    });
+    await buyRecordList.methods.cleanOutOfDate(1,policerList.options.address,policer.options.address).send({
+      from:accounts[2],gas:5000000
+    })
+    let companyBalance2 = await company.methods.getBalance().call({
+      from: accounts[1]
+    });
+    buyRecord1 = await buyRecordList.methods.getBuyRecordById(1).call();
+    assert.equal(buyRecord1[7],0);//订单绑定金额已被清空
+    assert.equal(companyBalance2-companyBalance1,5000);//公司账户退还5000
+    //
     //验证getBuyRecordIdsByCompany方法
     result = await buyRecordList.methods.getBuyRecordIdsByCompany(company.options.address).call();
     assert(result[0],1);
@@ -367,14 +448,111 @@ describe('icbc contract',() => {
     });
 
     //分别为车主的两辆车购买保险
-    await buyRecordList.methods.addBuyRecord(carOwner.options.address,1,company.options.address,1,120000,1200).send({
+    //为车主的第一辆车绑定公司的第一项保险
+    await buyRecordList.methods.addBuyRecord(carOwnerList.options.address,carOwner.options.address,1,company.options.address,1,120000,1200).send({
       from:accounts[0], gas: '5000000'
     });
-    await buyRecordList.methods.addBuyRecord(carOwner.options.address,1,company.options.address,1,120000,1200).send({
+    //公司同意
+    await buyRecordList.methods.doBuyRecord(companyList.options.address,company.options.address,1,true,5000).send({
+      from:accounts[1],gas:5000000
+    });
+    //为车主的第二辆车绑定公司的第二项保险
+    await buyRecordList.methods.addBuyRecord(carOwnerList.options.address,carOwner.options.address,2,company.options.address,2,120000,800).send({
       from:accounts[0], gas: '5000000'
+    });
+    //公司同意
+    await buyRecordList.methods.doBuyRecord(companyList.options.address,company.options.address,2,true,4000).send({
+      from:accounts[1],gas:5000000
     });
 
-    await accidentRecordList.methods.addAccidentRecord(carOwner.options.address,1,)
+
+    let accidentTime = new Date().valueOf();
+    let describe = randomVal(AccidentDescribe.site)+","+randomVal(AccidentDescribe.weather)
+      +","+randomVal(AccidentDescribe.roadLevel)+","+randomVal(AccidentDescribe.roadSituation)
+      +","+randomVal(AccidentDescribe.trafficSituation)+","+randomVal(AccidentDescribe.damage)
+      +","+randomVal(AccidentDescribe.speed)+","+randomVal(AccidentDescribe.acceleration)
+      +","+randomVal(AccidentDescribe.alcohol);
+    await accidentRecordList.methods.addAccidentRecord(carOwnerList.options.address,carOwner.options.address,1,accidentTime,describe,
+            company.options.address,1,1000).send({
+      from:accounts[0], gas: '5000000'
+    });
+    describe = randomVal(AccidentDescribe.site)+","+randomVal(AccidentDescribe.weather)
+      +","+randomVal(AccidentDescribe.roadLevel)+","+randomVal(AccidentDescribe.roadSituation)
+      +","+randomVal(AccidentDescribe.trafficSituation)+","+randomVal(AccidentDescribe.damage)
+      +","+randomVal(AccidentDescribe.speed)+","+randomVal(AccidentDescribe.acceleration)
+      +","+randomVal(AccidentDescribe.alcohol);
+    await accidentRecordList.methods.addAccidentRecord(carOwnerList.options.address,carOwner.options.address,2,accidentTime,describe,
+      company.options.address,2,1500).send({
+      from:accounts[0], gas: '5000000'
+    });
+    //验证getRecordList和getRecordInfoById
+    let recordIds = await accidentRecordList.methods.getRecordList().call();
+    assert.equal(recordIds[0],1);
+    assert.equal(recordIds[1],2);
+    let recordInfo = await accidentRecordList.methods.getRecordInfoById(1).call();
+    assert.equal(recordInfo[0],1);
+    assert.equal(recordInfo[1],carOwner.options.address);
+    assert.equal(recordInfo[2],1);
+    assert.equal(recordInfo[3],accidentTime);
+    console.log(recordInfo[4]);
+    assert.equal(recordInfo[5],1000);
+    assert.equal(recordInfo[6],company.options.address);
+    assert.equal(recordInfo[7],1);
+    assert.equal(recordInfo[8],0);
+    assert.equal(recordInfo[9],0);
+    recordInfo = await accidentRecordList.methods.getRecordInfoById(2).call();
+    assert.equal(recordInfo[0],2);
+    assert.equal(recordInfo[1],carOwner.options.address);
+    assert.equal(recordInfo[2],2);
+    assert.equal(recordInfo[3],accidentTime);
+    console.log(recordInfo[4]);
+    assert.equal(recordInfo[5],1500);
+    assert.equal(recordInfo[6],company.options.address);
+    assert.equal(recordInfo[7],2);
+    assert.equal(recordInfo[8],0);
+    assert.equal(recordInfo[9],0);
+
+    recordInfo = await TestFuncs.getAccidentRecordInfo(accidentRecordList,1);
+    console.log(recordInfo);
+    recordInfo = await TestFuncs.getAccidentRecordInfo(accidentRecordList,2);
+    console.log(recordInfo);
+
+    recordIds = await accidentRecordList.methods.getRecordIdsByOwnerAddr(carOwner.options.address).call();
+    assert(recordIds[0],1);
+    assert(recordIds[1],2);
+    recordIds = await accidentRecordList.methods.getRecordIdsByCompanyAddr(company.options.address).call();
+    assert(recordIds[0],1);
+    assert(recordIds[1],2);
+    recordIds = await accidentRecordList.methods.getRecordIdsByPolicerAddr(policer.options.address).call();
+    assert.equal(recordIds.length,0);
+    recordIds = await accidentRecordList.methods.getUndoRecordIds().call();
+    assert(recordIds[0],1);
+    assert(recordIds[1],2);
+
+    let buyRecord1 = await buyRecordList.methods.getBuyRecordById(1).call();
+    assert.equal(buyRecord1[7],5000);//订单绑定金额为最大赔付
+    let ownerBalance1 = await carOwner.methods.getBalance().call({
+      from: accounts[0]
+    });
+    //交警判定事故责任比例
+    await accidentRecordList.methods.doAccidentRecord(policerList.options.address,buyRecordList.options.address,
+          1,1,policer.options.address,carOwner.options.address,2,buyRecord1[7],1000).send({
+      from:accounts[2],gas:5000000
+    });
+    let ownerBalance2 = await carOwner.methods.getBalance().call({
+      from: accounts[0]
+    });
+    assert.equal(ownerBalance2-ownerBalance1,250);//车主账户多了250
+    buyRecord1 = await buyRecordList.methods.getBuyRecordById(1).call();
+    assert(buyRecord1[7],4750);//订单记录余额变为4500
+    let accidentRecord1 = await accidentRecordList.methods.getRecordInfoById(1).call();
+    assert.equal(accidentRecord1[8],policer.options.address);//事故记录的policer属性编程policer的address
+    assert.equal(accidentRecord1[9],2);//事故记录的responsiblity属性发生变化
+    assert.equal(accidentRecord1[10],250);
+
+    recordInfo = await TestFuncs.getAccidentRecordInfo(accidentRecordList,1);
+    console.log(recordInfo);
+
   });
 
 
