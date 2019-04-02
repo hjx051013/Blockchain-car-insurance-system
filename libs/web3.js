@@ -5,9 +5,9 @@ let web3;
 if (typeof window !== 'undefined' && typeof window.web3 !== 'undefined') {
   web3 = new Web3(window.web3.currentProvider);
   console.log("装了metamask");
-  // 服务器环境或者没有安装 Metamask, https://rinkeby.infura.io/CqCd0QgCozHBEk19ub2M
+  // 服务器环境或者没有安装 Metamask, ,http://127.0.0.1:7545
 } else {
-  web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
+  web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/CqCd0QgCozHBEk19ub2M'));
   console.log("没有装metamask");
 }
 
