@@ -3,10 +3,10 @@
 
 ## 安装运行配置
 1. 环境要求
-    - nodejs环境
-    - npm包管理器
-    - chrome浏览器和metamask插件
-    - ganache区块链测试软件
+    - [nodejs环境](https://nodejs.org/zh-cn/download/)
+    - npm包管理器，随nodejs一同安装
+    - chrome浏览器和[metamask插件](https://github.com/MetaMask/metamask-extension/releases)
+    - [ganache区块链测试软件](https://truffleframework.com/ganache)
 2. 在`npm run start`后的源码结构
 ![Xnip2019-04-02_14-31-28.png](http://hjx-markdown-images.test.upcdn.net/2019/04/02/4b571dbcb264f7e9c65d664f3c9aa141.png)
 
@@ -62,3 +62,4 @@
 4. 系统功能展示视频
     - [优酷地址](https://v.youku.com/v_show/id_XNDEyMjU3NjE2NA==.html?spm=a2h3j.8428770.3416059.1)
     - [youtube地址](https://www.youtube.com/watch?v=Aje2sdwKY0k&feature=youtu.be)
+    
